@@ -20,8 +20,6 @@ from variativity import variativity_replacement
 from utilities import get_index_in_list
 from possessive_self import get_subject_properties
 
-
-
 #setting default encoding to utf-8
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -178,7 +176,7 @@ with gzip.open(sys.argv[1], 'r') as fin:
 				#if there's a direct object, to start with 
 				if (parsed_tokens[index].dep_.strip() == "dobj"):
 					#if the verb belongs to the list of allowed verbs
-					if parsed_tokens[index].head.lemma_ in allowed_verbs:	
+					if parsed_tokens[index].head.lemma_ in allowed_verbs:
 						#if the object's head verb is not more than 6 tokens behind the direct object
 						poss_head_index = get_index_in_list(parsed_tokens, parsed_tokens[index].head)	
 						if poss_head_index < index and index - poss_head_index < 7:	
