@@ -170,32 +170,35 @@ def nodebox_verb_conjugator_passive(verb_lemma, final_phrase_active, aux_verb_bu
 	elif nodebox_gerund:
 		auxiliary_verb_added = 'being'
 	elif nodebox_simple_present_third_person:
-		auxiliary_verb_added = 'is/are'
+		if str(subject_number) == '1':
+			auxiliary_verb_added = 'is'
+		else:
+			auxiliary_verb_added = 'are'
 	elif nodebox_simple_present_other_person:
 		if str(subject_person) == '1' and str(subject_number) == '1':
 			auxiliary_verb_added = 'am'
+		elif str(subject_person) == '3' and str(subject_number) == '1':
+			auxiliary_verb_added = 'is'
 		else:
-			auxiliary_verb_added = 'is/are'
+			auxiliary_verb_added = 'are'
 	elif nodebox_simple_past:
-		if str(subject_number) == '2':
+		if str(subject_number) == '2' or str(subject_person) == '2':
 			auxiliary_verb_added = 'were'
 		else:
 			auxiliary_verb_added = 'was'
 	else:
 		auxiliary_verb_added = 'be'
 	
-	
 	final_phrase_passive = final_phrase_active
 	
 	if set(['do','does','did']) & set(final_phrase_active.split(' ')):
-		final_phrase_passive = string.replace(final_phrase_passive, 'do', auxiliary_verb_added)
-		final_phrase_passive = string.replace(final_phrase_passive, 'does', auxiliary_verb_added)
-		final_phrase_passive = string.replace(final_phrase_passive, 'did', auxiliary_verb_added)
-		final_phrase_passive = final_phrase_passive.replace(final_phrase_passive.split(' ')[-1], en.verb.past_participle(verb_lemma))
-		
+		final_phrase_passive1 = final_phrase_passive.replace('does', auxiliary_verb_added)
+		final_phrase_passive2 = final_phrase_passive1.replace('do', auxiliary_verb_added)
+		final_phrase_passive3 = final_phrase_passive2.replace('did', auxiliary_verb_added)
+		final_phrase_passive4 = final_phrase_passive3.replace(final_phrase_passive3.split(' ')[-1], en.verb.past_participle(verb_lemma))
+		return final_phrase_passive4
 	else:
 		final_phrase_passive = final_phrase_passive.replace(final_phrase_passive.split(' ')[-1], auxiliary_verb_added + ' ' + en.verb.past_participle(verb_lemma))
-		
 		return final_phrase_passive
 
 
@@ -280,7 +283,6 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 			set_gerund_only = True
 	#participle. 'having' + participle is handled separately from the regular perfect tenses
 	elif verb_tag == u'VBN' and (set(['has', '\'s', 'have', '\'d', 'had', '\'d', 'having']) & set(list_of_auxiliary_verbs)):
-		print 'Participle true for ' + sentence
 		nodebox_participle = True
 		if 'having' in list_of_auxiliary_verbs:
 			set_having_participle = True
