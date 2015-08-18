@@ -119,7 +119,8 @@ def nodebox_verb_conjugator(verb_lemma, aux_verb_buffer, subject_person, subject
 		non_negated_answer = en.verb.past_participle(verb_lemma)
 		if nodebox_negate:
 			if aux_verb_buffer:
-				return ' '.join(aux_verb_buffer.insert(1, 'not')) + ' ' + non_negated_answer
+				aux_verb_buffer.insert(1, 'not')
+				return ' '.join(aux_verb_buffer) + ' ' + non_negated_answer
 			else:
 				return 'not ' + non_negated_answer
 	
@@ -147,15 +148,16 @@ def nodebox_verb_conjugator(verb_lemma, aux_verb_buffer, subject_person, subject
 			return 'did not ' + non_negated_answer
 	
 	if nodebox_negate:
-		if aux_verb_buffer:
-			return ' '.join(aux_verb_buffer.insert(1, 'not')) + ' ' + non_negated_answer
+		if aux_verb_buffer and aux_verb_buffer is not None:
+			aux_verb_buffer.insert(1, u'not')
+			return ' '.join(aux_verb_buffer) + ' ' + non_negated_answer
 		else:
 			if str(subject_person) == '3' and str(subject_number) == '1':
 				return 'does not ' + non_negated_answer
 			else:
 				return 'do not ' + non_negated_answer
 	
-	if aux_verb_buffer:
+	if aux_verb_buffer and aux_verb_buffer is not None:
 		return ' '.join(aux_verb_buffer) + ' ' + non_negated_answer
 	else:
 		return non_negated_answer
@@ -394,7 +396,8 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 			for dative_object_modifier in reversed(dative_object_buffer):
 				dative_object_string = dative_object_modifier + ' ' + dative_object_string
 	
-	if adjectival_modification and adjectival_modification[-2:-1] == 'ly':
+	if adjectival_modification and adjectival_modification.strip()[-2:-1] == 'ly':
+		print 'Kya chutiyapa hai'
 		final_phrase_active = ' '.join(final_phrase_active.split()[:-1]) + ' ' + adjectival_modification + ' ' + final_phrase_active.split()[-1]
 		final_phrase_passive = ' '.join(final_phrase_passive.split()[:-1]) + ' ' + adjectival_modification + ' ' + final_phrase_passive.split()[-1]	
 	if dative_object_string:
@@ -424,7 +427,7 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 					if token is not preposition_token:
 						sentence += token.orth_ + ' '
 				sentence.strip()
-			"""elif verb_prep_combination_dict[verb_prep_caps] == 'A':
+			elif verb_prep_combination_dict[verb_prep_caps] == 'A':
 				probabilities = urllib2.urlopen(urllib2.Request('http://weblm.research.microsoft.com/rest.svc/bing-body/2013-12/5/jp?u=' + microsoft_weblm_api_key + '&format=json', en.verb.past(related_verb) + '\n' + en.verb.past(related_verb) + ' ' + preposition_token.orth_)).read().split(',')
 				verb_probability = float(probabilities[0][1:])
 				verb_prep_probability = float(probabilities[1][:-1])
@@ -436,12 +439,12 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 					for token in parsed_tokens:
 						if token is not preposition_token:
 							sentence += token.orth_ + ' '
-					sentence.strip()"""
+					sentence.strip()
 	
 	#if the object is coordinated in a zeugma, replicate the verb to feature with the coordinated object
 	zeugma_heads = [token for token in parsed_tokens if token.dep_ == 'conj' and token.head is object_token and [other_token for other_token in parsed_tokens if other_token.orth_.lower() in ['and', 'or'] and other_token.dep_ == 'cc' and other_token.head is object_token]]
 	if zeugma_heads:
-		zeugma_conjunction = [other_token for other_token in parsed_tokens if other_token.orth_.lower() == 'and' and other_token.dep_ == 'cc' and other_token.head is object_token][0]
+		zeugma_conjunction = [other_token for other_token in parsed_tokens if other_token.orth_.lower() in ['and', 'or'] and other_token.dep_ == 'cc' and other_token.head is object_token][0]
 		conjunction_index = get_index_in_list(parsed_tokens, zeugma_conjunction)
 		sentence = sentence.replace(parsed_tokens[conjunction_index-1].orth_ + ' '+ zeugma_conjunction.orth_ + ' ' + parsed_tokens[conjunction_index+1].orth_, parsed_tokens[conjunction_index-1].orth_ + ' '+ zeugma_conjunction.orth_ + ' ' + verb_token.orth_ + ' ' + parsed_tokens[conjunction_index+1].orth_)
 				

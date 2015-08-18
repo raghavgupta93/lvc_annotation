@@ -16,6 +16,8 @@ possessive_dictionary = {'he' : 'his', 'i' : 'my', 'it' : 'its', 'she' : 'her', 
 person_dictionary = {'he' : 3, 'i' : 1, 'it' : 3, 'she' : 3, 'you' : 2, 'we' : 1, 'article' : 3, 'this' : 3, 'these' : 3, 'those' : 3}
 number_dictionary = {'he' : 1, 'i' : 1, 'it' : 1, 'she' : 1, 'you' : 2, 'we' : 2, 'article' : 1, 'this' : 1, 'these' : 2, 'those' : 2}
 
+possessive_dictionary_singular = {'who' : 'his/her', 'which' : 'its', 'what' : 'its', 'whom' : 'his/her'}
+
 def person_or_not (sentence, subject_word, ner_tagger, parsed_tokens, verb_token, subj_token):
 	#perform NER
 	entities = ner_tagger.get_entities(sentence)
@@ -30,6 +32,8 @@ def person_or_not (sentence, subject_word, ner_tagger, parsed_tokens, verb_token
 	#check for pronoun
 	if subject_word in possessive_dictionary:
 		return [person_dictionary[subject_word], number_dictionary[subject_word], possessive_dictionary[subject_word]]
+	if subject_word in possessive_dictionary_singular:
+		return [3, 1, possessive_dictionary_singular[subject_word]]
 	#check whether 'person' is a hypernym
 	if wn.synsets(subj_token.lemma_.lower(), pos=wn.NOUN):
 		subj_synset = wn.synset(subj_token.lemma_.lower() + '.n.01')
@@ -72,6 +76,5 @@ def get_subject_properties(parsed_tokens, verb_token, object_token, ner_tagger, 
 		#if the subject is plural according to the inflector, and the verb form is not singular - doing this test only for dictionary words and not for NEs which were not detected
 		if wn.synsets(subj_token.lemma_.lower(), pos=wn.NOUN) and inflection.pluralize(subject_word) == subject_word and inflection.singularize(subject_word) != subject_word:
 				return [3, 2, u'their']
-		return None
 	else:
 		return None
