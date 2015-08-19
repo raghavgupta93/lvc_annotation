@@ -318,7 +318,7 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 	#numerical modifiers
 	list_of_nummod_modifiers = [token for token in list_of_modifiers if token.dep_ == "nummod" and token.head is object_token and token.orth_.lower() not in ['0', 'zero']]
 	#clues for negation- a numerical modifier that says 'zero', or a determiner for the object which says 'no'. More can, of course, be added
-	list_of_negative_modifiers = [token for token in parsed_tokens if token.head is object_token and (token.dep_ == 'nummod' and token.orth_.lower() in ['0', 'zero']) or (token.dep_ == 'det' and token.orth_.lower() == 'no')]
+	list_of_negative_modifiers = [token for token in parsed_tokens if token.head is object_token and ((token.dep_ == 'nummod' and token.orth_.lower() in ['0', 'zero']) or (token.dep_ == 'det' and token.orth_.lower() == 'no'))]
 	
 	adjectival_modification = ''
 	numerical_modification = ''
@@ -396,13 +396,13 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 			for dative_object_modifier in reversed(dative_object_buffer):
 				dative_object_string = dative_object_modifier + ' ' + dative_object_string
 	
-	if adjectival_modification and adjectival_modification.strip()[-2:-1] == 'ly':
-		print 'Kya chutiyapa hai'
+	if adjectival_modification and adjectival_modification.strip()[-2:] == 'ly':
 		final_phrase_active = ' '.join(final_phrase_active.split()[:-1]) + ' ' + adjectival_modification + ' ' + final_phrase_active.split()[-1]
 		final_phrase_passive = ' '.join(final_phrase_passive.split()[:-1]) + ' ' + adjectival_modification + ' ' + final_phrase_passive.split()[-1]	
 	if dative_object_string:
 		final_phrase_active += ' ' + dative_object_string
-	if adjectival_modification and not (adjectival_modification[-2:-1] == 'ly'):
+		final_phrase_passive += ' by ' + dative_object_string
+	if adjectival_modification and not (adjectival_modification[-2:] == 'ly'):
 		final_phrase_active += ' ' + adjectival_modification
 		final_phrase_passive += ' ' + adjectival_modification
 	if numerical_modification:
@@ -431,10 +431,10 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 				probabilities = urllib2.urlopen(urllib2.Request('http://weblm.research.microsoft.com/rest.svc/bing-body/2013-12/5/jp?u=' + microsoft_weblm_api_key + '&format=json', en.verb.past(related_verb) + '\n' + en.verb.past(related_verb) + ' ' + preposition_token.orth_)).read().split(',')
 				verb_probability = float(probabilities[0][1:])
 				verb_prep_probability = float(probabilities[1][:-1])
-				print en.verb.past(related_verb), verb_probability
-				print en.verb.past(related_verb) + ' ' + preposition_token.orth_, verb_prep_probability
+				#print en.verb.past(related_verb), verb_probability
+				#print en.verb.past(related_verb) + ' ' + preposition_token.orth_, verb_prep_probability
 				#major changes may be needed here
-				if verb_probability - verb_prep_probability > 2:	
+				if verb_probability - verb_prep_probability > 1.75:	
 					sentence = ''
 					for token in parsed_tokens:
 						if token is not preposition_token:
