@@ -114,14 +114,8 @@ preprocess_verb_conjugator_lexicon(conjugated_verbs)
 verb_prep_file = open('verb_prep_combinations', 'w')
 verb_prep_file_noun_attach = open('verb_prep_combinations_noun_attachment', 'w')
 
-#list of common prepositions
-common_prepositions = ['of', 'in', 'to', 'for', 'with', 'on', 'from']
-
 #list of allowed verbs
 allowed_verbs = ['make', 'take', 'give', 'have', 'hold', 'do', 'commit', 'pay', 'provide', 'offer', 'draw', 'show', 'reach', 'get', 'lay']
-
-#for the most common unambiguous pronouns
-possessive_dictionary = {'he' : 'his', 'i' : 'my', 'it' : 'its', 'she' : 'her', 'you' : 'your', 'we' : 'our', 'article' : 'its', 'this' : 'its'}
 
 #exhaustive adjective to adverb mapping
 adjective_adverb_dict = dict()
@@ -134,6 +128,12 @@ catvar_file = open(tool_dir + "/catvar/catvar21.signed", "r")
 
 #verb-prep combination dict
 verb_prep_combination_dict = dict()
+
+#mapping of LVC object to preposition, if exists
+object_preposition_dict = dict()
+
+#set of LVC objects that do not strongly prefer a particular preposition
+no_preposition_objects = set()
 
 #counter
 counter = 0
@@ -167,6 +167,11 @@ with gzip.open(sys.argv[1], 'r') as fin:
 				break		
 			#reconstruct original sentence to be parsed by spacy
 			sentence = sentence.strip()
+			
+			if len(sentence) > 250:
+				sentence = u''
+				candidate_object_token_numbers[:] = []
+				continue
 
 			#parsing the sentence
 			parsed_tokens = nlp_pipeline(sentence)
@@ -259,7 +264,7 @@ with gzip.open(sys.argv[1], 'r') as fin:
 				verb = list_of_related_verbs[0]
 				if verb not in conjugated_verbs or verb != en.verb.present(verb) or not subject_properties:
 					continue
-				replaced_strings = variativity_replacement(sentence, verb_token, object_token, object_index, verb_index, parsed_tokens, verb, lvc_phrase, catvar_file, adjective_adverb_dict, no_adverb_set, subject_properties[0], subject_properties[1])
+				replaced_strings = variativity_replacement(sentence, verb_token, object_token, object_index, verb_index, parsed_tokens, verb, lvc_phrase, catvar_file, adjective_adverb_dict, no_adverb_set, object_preposition_dict, no_preposition_objects, subject_properties[0], subject_properties[1])
 				if replaced_strings:
 					for replaced_string in replaced_strings:
 						print replaced_string

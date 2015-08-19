@@ -23,12 +23,12 @@ def person_or_not (sentence, subject_word, ner_tagger, parsed_tokens, verb_token
 	entities = ner_tagger.get_entities(sentence)
 	#if a PERSON named entity is found, assume singular, and attach 'his/her'
 	if 'PERSON' in entities and [person_name for person_name in entities['PERSON'] if subject_word in person_name.lower()]:
-		return [3, 1, u'his/her']
+		return [3, 1, u'his/her/its']
 	#if a LOCATION or ORGANIZATION named entity is found, assume singular, and attach 'its'
 	if 'ORGANIZATION' in entities and [person_name for person_name in entities['ORGANIZATION'] if subject_word in person_name.lower()]:
-		return [3, 1, u'its']
+		return [3, 1, u'its/his/her']
 	if 'LOCATION' in entities and [person_name for person_name in entities['LOCATION'] if subject_word in person_name.lower()]:
-		return [3, 1, u'its']
+		return [3, 1, u'its/his/her']
 	#check for pronoun
 	if subject_word in possessive_dictionary:
 		return [person_dictionary[subject_word], number_dictionary[subject_word], possessive_dictionary[subject_word]]
@@ -38,9 +38,9 @@ def person_or_not (sentence, subject_word, ner_tagger, parsed_tokens, verb_token
 	if wn.synsets(subj_token.lemma_.lower(), pos=wn.NOUN):
 		subj_synset = wn.synset(subj_token.lemma_.lower() + '.n.01')
 		if wn.synset('person.n.01') in list(subj_synset.closure(lambda s: s.hypernyms())):
-			return [3, 1, u'his/her']
+			return [3, 1, u'his/her/its']
 		else:
-			return [3, 1, u'its']
+			return [3, 1, u'its/his/her']
 	return None
 
 def get_subject_properties(parsed_tokens, verb_token, object_token, ner_tagger, sentence):

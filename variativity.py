@@ -12,7 +12,7 @@ import en
 from subprocess import Popen, PIPE, STDOUT, check_output, call
 import time
 #list of common prepositions
-common_prepositions = ['of', 'in', 'to', 'for', 'with', 'on', 'from']
+common_prepositions = ['of', 'to', 'for', 'with', 'on', 'from', 'about']
 verb_prep_combination_dict = dict()
 microsoft_weblm_api_key = '020d6c7b-0cbe-454b-aa06-8f37e395831a'
 
@@ -203,8 +203,30 @@ def nodebox_verb_conjugator_passive(verb_lemma, final_phrase_active, aux_verb_bu
 		final_phrase_passive = final_phrase_passive.replace(final_phrase_passive.split(' ')[-1], auxiliary_verb_added + ' ' + en.verb.past_participle(verb_lemma))
 		return final_phrase_passive
 
+def select_preposition_for_object(verb_lemma, object_preposition_dict, no_preposition_objects):
+	if verb_lemma in no_preposition_objects:
+		return ''
+	if verb_lemma in object_preposition_dict:
+		return object_preposition_dict[verb_lemma]
+	verb_probability = float(urllib2.urlopen(urllib2.Request('http://weblm.research.microsoft.com/rest.svc/bing-body/2013-12/5/jp?u=' + microsoft_weblm_api_key + '&format=json', 'been ' + en.verb.present_participle(verb_lemma))).read()[1:-1])
+	
+	min_difference = 1.1
+	min_difference_preposition = ''
+	
+	for preposition in common_prepositions:
+		preposition_probability = float(urllib2.urlopen(urllib2.Request('http://weblm.research.microsoft.com/rest.svc/bing-body/2013-12/5/jp?u=' + microsoft_weblm_api_key + '&format=json', 'been ' + en.verb.present_participle(verb_lemma) + ' ' + preposition)).read()[1:-1])
+		if verb_probability - preposition_probability < min_difference:
+			min_difference = verb_probability - preposition_probability
+			min_difference_preposition = preposition
+	
+	if min_difference_preposition:
+		object_preposition_dict[verb_lemma] = min_difference_preposition
+		return min_difference_preposition
+	else:
+		no_preposition_objects.add(verb_lemma)
+		return ''
 
-def variativity_replacement(sentence, verb_token, object_token, object_index, verb_index, parsed_tokens, related_verb, lvc_phrase, catvar_file, adjective_adverb_dict, no_adverb_set, subject_person, subject_number):
+def variativity_replacement(sentence, verb_token, object_token, object_index, verb_index, parsed_tokens, related_verb, lvc_phrase, catvar_file, adjective_adverb_dict, no_adverb_set, object_preposition_dict, no_preposition_objects, subject_person, subject_number):
 	verb_tag = verb_token.tag_
 	final_phrase = u''
 	
@@ -421,12 +443,19 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 		if verb_prep_caps in verb_prep_combination_dict and verb_prep_combination_dict[verb_prep_caps] != '-':
 			if verb_prep_combination_dict[verb_prep_caps] == '+':
 				#reconstruct sentence without that preposition
-				#print 'Preposition unambiguously removed'
 				sentence = ''
 				for token in parsed_tokens:
 					if token is not preposition_token:
 						sentence += token.orth_ + ' '
-				sentence.strip()
+				sentence = sentence.strip()
+				
+				#check if preposition to be added
+				additional_preposition = select_preposition_for_object(related_verb, object_preposition_dict, no_preposition_objects)
+				if additional_preposition:
+					print 'Adding preposition ' + additional_preposition
+					final_phrase_active = final_phrase_active.strip() + ' ' + additional_preposition
+					final_phrase_passive = final_phrase_passive.strip() + ' ' + additional_preposition
+				
 			elif verb_prep_combination_dict[verb_prep_caps] == 'A':
 				probabilities = urllib2.urlopen(urllib2.Request('http://weblm.research.microsoft.com/rest.svc/bing-body/2013-12/5/jp?u=' + microsoft_weblm_api_key + '&format=json', en.verb.past(related_verb) + '\n' + en.verb.past(related_verb) + ' ' + preposition_token.orth_)).read().split(',')
 				verb_probability = float(probabilities[0][1:])
@@ -439,8 +468,23 @@ def variativity_replacement(sentence, verb_token, object_token, object_index, ve
 					for token in parsed_tokens:
 						if token is not preposition_token:
 							sentence += token.orth_ + ' '
-					sentence.strip()
-	
+					sentence = sentence.strip()
+					
+					#check if preposition to be added
+					additional_preposition = select_preposition_for_object(related_verb, object_preposition_dict, no_preposition_objects)
+					if additional_preposition:
+						print 'Adding preposition ' + additional_preposition
+						final_phrase_active = final_phrase_active.strip() + ' ' + additional_preposition
+						final_phrase_passive = final_phrase_passive.strip() + ' ' + additional_preposition
+		
+		elif verb_prep_caps not in verb_prep_combination_dict:
+			#check if preposition to be added
+			additional_preposition = select_preposition_for_object(related_verb, object_preposition_dict, no_preposition_objects)
+			if additional_preposition:
+				print 'Adding preposition ' + additional_preposition
+				final_phrase_active = final_phrase_active.strip() + ' ' + additional_preposition
+				final_phrase_passive = final_phrase_passive.strip() + ' ' + additional_preposition
+		
 	#if the object is coordinated in a zeugma, replicate the verb to feature with the coordinated object
 	zeugma_heads = [token for token in parsed_tokens if token.dep_ == 'conj' and token.head is object_token and [other_token for other_token in parsed_tokens if other_token.orth_.lower() in ['and', 'or'] and other_token.dep_ == 'cc' and other_token.head is object_token]]
 	if zeugma_heads:
